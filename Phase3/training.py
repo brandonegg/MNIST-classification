@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 import pickle
 import math
 import numpy as np
+import pandas as pd
 
 X, y = fetch_openml("mnist_784", version=1, return_X_y=True, as_frame=False)
 y = np.asarray([int(numeric_string) for numeric_string in y])
@@ -38,7 +39,7 @@ def build_classifier(x_data, y_data, C=1.0, kernel='linear', degree=3, gamma='sc
     classifier.fit(x_data, y_data)
     return classifier
 
-def test_classifier(x_data, y_data, x_test, y_test, C=1.0, kernel='linear', degree=3, gamma='scale', shape='ovr'):
+def test_classifier(logs, x_data, y_data, x_test, y_test, C=1.0, kernel='linear', degree=3, gamma='scale', shape='ovr'):
     test = {
         'shape': shape,
         'degree': degree,
@@ -49,11 +50,8 @@ def test_classifier(x_data, y_data, x_test, y_test, C=1.0, kernel='linear', degr
 
     svr_test = build_classifier(x_data, y_data, C=C, kernel=kernel, degree=degree, gamma=gamma, shape=shape)
     test_score = svr_test.score(x_test, y_test)
-
-    if best_score == None or test_score > best_score:
-        print(f"Achieved new high score ({test_score}) with: {test}")
-        best_score = test_score
-        best_params = test
+    test['score'] = test_score
+    logs.loc[len(logs)]=test
 
 if __name__ == "__main__":
     digits = (0,1,2)
@@ -61,9 +59,11 @@ if __name__ == "__main__":
 
     shape_options = ['ovr']
     C_options = np.linspace(5e-5, 10e-7, 2)
-    degree_options = range(2,3)
+    degree_options = range(2,4)
     kernel_options = ['poly']
     gamma_options = ['auto']
+
+    output_logs = pd.DataFrame(columns=['score', 'shape', 'degree', 'kernel', 'gamma', 'C'])
 
     threads = []
     for shape in shape_options:
@@ -71,7 +71,7 @@ if __name__ == "__main__":
             for kernel in kernel_options:
                 for gamma in gamma_options:
                     for C in C_options:
-                        args = (X_train, y_train, X_test, y_test, C, kernel, degree, gamma, shape)
+                        args = (output_logs, X_train, y_train, X_test, y_test, C, kernel, degree, gamma, shape)
                         new_thread = threading.Thread(target=test_classifier, args=args)
                         threads.append(new_thread)
 
@@ -81,4 +81,5 @@ if __name__ == "__main__":
     for t in threads:
         val = t.join() # Wait for thread to stops
 
-    print(f"Best computed parameters: {best_params}")
+    print("TESTING COMPLETE, OUTPUTING LOG FILE")
+    output_logs.to_csv('./output.csv')
