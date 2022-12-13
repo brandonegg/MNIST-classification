@@ -9,6 +9,9 @@ import numpy as np
 X, y = fetch_openml("mnist_784", version=1, return_X_y=True, as_frame=False)
 y = np.asarray([int(numeric_string) for numeric_string in y])
 
+best_score = None
+best_params = None
+
 with open('temp.pickle', 'wb') as handle:
     pickle.dump([X, y], handle)
 
@@ -47,16 +50,18 @@ def test_classifier(x_data, y_data, x_test, y_test, C=1.0, kernel='linear', degr
     svr_test = build_classifier(x_data, y_data, C=C, kernel=kernel, degree=degree, gamma=gamma, shape=shape)
     test_score = svr_test.score(x_test, y_test)
 
-    print(f"Score = {test_score} for test: {test}")
-    return "hello"
+    if best_score == None or test_score > best_score:
+        print(f"Achieved new high score ({test_score}) with: {test}")
+        best_score = test_score
+        best_params = test
 
 if __name__ == "__main__":
     digits = (0,1,2)
     X_train, y_train, X_test, y_test, X_val, y_val = loadData(digits)
 
     shape_options = ['ovr']
-    C_options = np.linspace(5e-5, 10e-7, 50)
-    degree_options = range(2,10)
+    C_options = np.linspace(5e-5, 10e-7, 2)
+    degree_options = range(2,3)
     kernel_options = ['poly']
     gamma_options = ['auto']
 
@@ -75,4 +80,5 @@ if __name__ == "__main__":
 
     for t in threads:
         val = t.join() # Wait for thread to stops
-        print(val)
+
+    print(f"Best computed parameters: {best_params}")
