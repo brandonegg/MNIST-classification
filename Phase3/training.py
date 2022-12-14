@@ -54,14 +54,14 @@ def test_classifier(logs, x_data, y_data, x_test, y_test, C=1.0, kernel='linear'
     logs.loc[len(logs)]=test
 
 if __name__ == "__main__":
-    digits = (0,1,2)
+    digits = (0,1,2,3,4,5,6,7,8,9)
     X_train, y_train, X_test, y_test, X_val, y_val = loadData(digits)
 
-    shape_options = ['ovr']
-    C_options = np.linspace(5e-5, 10e-7, 2)
-    degree_options = range(2,4)
+    shape_options = ['ovr', 'ovo']
+    C_options = [1e-6]
+    degree_options = [2]
     kernel_options = ['poly']
-    gamma_options = ['auto']
+    gamma_options = ['auto', 'scale']
 
     output_logs = pd.DataFrame(columns=['score', 'shape', 'degree', 'kernel', 'gamma', 'C'])
 
